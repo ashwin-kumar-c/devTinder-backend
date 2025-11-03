@@ -2,6 +2,11 @@ const express = require("express")
 
 const app = express()
 
+/* 
+    How Express wroks
+    Get /users ==> middleware chain ==> request handler
+*/
+
 app.get(/.*fly$/, (req, res) => {
     res.send("RCCCCCCCCCCCCCBBBBBBBBBBB")
 })
@@ -18,21 +23,22 @@ app.get(/.*fly$/, (req, res) => {
 
 // app.use("/uer", [rh1, rh2, rh3, rh4])
 
-app.use("/user",
-  (req, res, next) => { // Route handler
-    console.log("Handling the route User 2");
-    res.send("2nd Response");
+// Middleware
+app.use("/",(req, res, next) => { 
+    console.log("getting slash");
+    // res.send("Response");
     next()
   }
 );
 
-app.use("/user",
-  (req, res, next) => { // Route handler
-    console.log("Handling the route User 1");
-    // res.send("1st Response");
-    // next()
-  }
-);
+// Route handler
+app.get("/user", 
+    (req, res, next) => {
+    console.log("1st User handle");
+    res.send("1st User Response")
+}, (req, res, next) => {
+    res.send("2nd User Response")
+})
 
 
 
