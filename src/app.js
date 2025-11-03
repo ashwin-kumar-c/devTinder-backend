@@ -20,26 +20,21 @@ app.get(/.*fly$/, (req, res) => {
 
 app.use("/user",
   (req, res, next) => { // Route handler
-    console.log("Handling the route User 1");
-    // res.send("1st Response");
-    // console.log("ZZZZZ");
-    next()
-  },
-  [(req, res, next) => { // 2nd Route handler
     console.log("Handling the route User 2");
-    // res.send("2nd Response");
+    res.send("2nd Response");
     next()
-  },
-  (req, res, next) => { // 3nd Route handler
-    console.log("Handling the route User 3");
-    // res.send("3rd Response");
-    next()
-  }],
-  (req, res, next) => { // 2nd Route handler
-    console.log("Handling the route User 4");
-    res.send("4th Response");
   }
 );
+
+app.use("/user",
+  (req, res, next) => { // Route handler
+    console.log("Handling the route User 1");
+    // res.send("1st Response");
+    // next()
+  }
+);
+
+
 
 app.listen(4000, () => {
     console.log("Server is Successfully running on Port 4000");
