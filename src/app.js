@@ -1,4 +1,5 @@
 const express = require("express")
+const { adminAuth, userAuth } = require("../middlewares/auth")
 
 const app = express()
 
@@ -21,25 +22,21 @@ app.get(/.*fly$/, (req, res) => {
 //     res.send({firstname: "Jon", lastName: "Doe"})
 // })
 
-// app.use("/uer", [rh1, rh2, rh3, rh4])
+app.use("/admin", adminAuth) // This middleware only runs when part of url matches "/admin"
 
-// Middleware
-app.use("/",(req, res, next) => { 
-    console.log("getting slash");
-    // res.send("Response");
-    next()
-  }
-);
+// app.use("/user", userAuth)
 
-// Route handler
-app.get("/user", 
-    (req, res, next) => {
-    console.log("1st User handle");
-    res.send("1st User Response")
-}, (req, res, next) => {
-    res.send("2nd User Response")
+app.get("/user", userAuth, (req, res) => {
+    res.send("User Data")
 })
 
+app.get("/admin/getAllData", (req, res) => {
+    res.send("All Data sent")
+})
+
+app.delete("/admin/deleteData", (req, res) => {
+    res.send("Data deleted")
+})
 
 
 app.listen(4000, () => {
