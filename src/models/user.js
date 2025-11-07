@@ -13,6 +13,7 @@ const userSchema = new Schema({
   },
   lastName: {
     type: String,
+    required: true,
     maxLength: 50,
     trim: true,
   },
@@ -32,9 +33,8 @@ const userSchema = new Schema({
     type: String,
     required: true,
     trim: true,
-    maxLength: 50,
     validate(value) {
-        if(!validator.isStrongPassword(value, {minLength: 12})) {
+        if(!validator.isStrongPassword(value, {minLength: 10})) {
             throw new Error("Invalid Password: " + value);
         }
     }
@@ -42,7 +42,6 @@ const userSchema = new Schema({
   age: {
     type: Number,
     trim: true,
-    required: true,
     min: 18,
     max: 50,
   },
