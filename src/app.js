@@ -2,11 +2,14 @@ const express = require("express");
 const connectDB = require("./Config/Database");
 const { dataValidator } = require("./Utils/Validation");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser")
+const jwt = require("jsonwebtoken")
 const User = require("./Models/Users");
 
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   const { firstName, lastName, emailId, password } = req.body;
@@ -42,6 +45,9 @@ app.post("/login", async (req, res) => {
     const isLoginValid = await bcrypt.compare(password, user.password);
 
     if (isLoginValid) {
+      const token = await jwt.sign({_id: user._id}, "DevTinder@081125")
+      res.cookie("token", token)
+      
       res.send("User Logged in successfully");
     } else {
       res.status(400).send("Invalid Credentials");
@@ -50,6 +56,27 @@ app.post("/login", async (req, res) => {
     res.status(400).send("Error logging in the user");
   }
 });
+
+app.get("/profile", async (req, res) => {
+  try {
+    const cookies = req.cookies
+    const {token} = cookies
+    if(!token) {
+      throw new Error ("Invalid Token")
+    }
+    const decodedToken = await jwt.verify(token, "DevTinder@081125")
+
+    const user = await User.findById({_id: decodedToken._id})
+
+    if(!user) {
+      throw new Error ("User dosen't exist")
+    }
+    res.send(user)
+
+  } catch(err) {
+
+  }
+})
 
 // GET - All Users
 app.get("/feed", async (req, res) => {
