@@ -2,7 +2,7 @@ const express = require("express");
 const connectDB = require("./Config/Database");
 const { dataValidator } = require("./Utils/Validation");
 const bcrypt = require("bcrypt");
-const User = require("./Models/User");
+const User = require("./Models/Users");
 
 const app = express();
 
