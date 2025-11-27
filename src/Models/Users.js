@@ -50,6 +50,10 @@ const userSchema = new Schema({
   gender: {
     type: String,
     trim: true,
+    enum: {
+      values: ["male", "female", "others"],
+      message: `{VALUE} is invalid gender`
+    },
     validate(value) {
       if (!["male", "female", "others"].includes(value)) {
         throw new Error("Invalid Gender");
@@ -84,6 +88,8 @@ const userSchema = new Schema({
 }, {
     timestamps: true
 });
+
+userSchema.index({firstName: 1})
 
 userSchema.methods.getJWT = async function () {
   const user = this
