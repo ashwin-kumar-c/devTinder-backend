@@ -50,4 +50,48 @@ requestRouter.post("/request/:status/:toUserId", userAuth, async (req, res) => {
   }
 });
 
+/* 
+Steps: 
+  request sent from Ashwin --> Elon
+  loggedInUser = Elon
+  validate requestId
+  validate status === interested
+*/
+
+requestRouter.post("/request/review/:status/:requestId", userAuth, async (req, res) => {
+
+  try {
+    const status = req.params.status
+    const requestId = req.params.requestId
+    const loggedInUserId = req.user._id
+    const allowedStatus = ["accepted", "rejected"]
+
+    const isvalidStatus = allowedStatus.includes(status)
+    if(!isvalidStatus) {
+      return res.status(400).send("Invalid status type: " + status)
+    }
+
+    const connectionRequest = await ConnectionRequest.findOne({
+      _id: requestId,
+      toUserId: loggedInUserId,
+      status: "interested"
+    })
+
+    if(!connectionRequest) {
+      return res.status(404).send("Connection request doesn't exist")
+    }
+
+    connectionRequest.status = status
+    const data = await connectionRequest.save()
+
+    res.send({
+      message: `Connection request ${status}`,
+      data: data
+    })
+  } catch(err) {
+    return res.status(400).send("Error sending connection request:" + err.message);
+  }
+
+})
+
 module.exports = requestRouter;
