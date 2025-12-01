@@ -1,6 +1,7 @@
 const express = require("express");
 const { userAuth } = require("../Middlewares/Auth");
 const ConnectionRequest = require("../Models/ConnectionRequest");
+const User = require("../Models/Users");
 
 const userRouter = express.Router();
 
@@ -8,10 +9,10 @@ const USER_DISPLAY_DATA = "firstName lastName about photoUrl skills"
 
 userRouter.get("/user/requests/received", userAuth, async (req, res) => {
   try {
-    const loggedInUsedId = req.user._id;
+    const loggedInUser = req.user;
 
     const getAllRequests = await ConnectionRequest.find({
-      toUserId: loggedInUsedId,
+      toUserId: loggedInUser._id,
       status: "interested",
     }).populate("fromUserId", USER_DISPLAY_DATA);
     // .populate("fromUserId", ["firstName", "lastName"])
@@ -26,17 +27,17 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
 
 userRouter.get("/user/connections", userAuth, async (req, res) => {
   try {
-    const loggedInUsedId = req.user._id;
+    const loggedInUser = req.user;
 
     const connections = await ConnectionRequest.find({
       status: "accepted",
-      $or: [{ fromUserId: loggedInUsedId }, { toUserId: loggedInUsedId }],
+      $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
     })
       .populate("fromUserId", USER_DISPLAY_DATA)
       .populate("toUserId", USER_DISPLAY_DATA);
 
     const modifiedConnections = connections.map((ele) => {
-      if (ele.fromUserId._id.toString() === loggedInUsedId.toString()) {
+      if (ele.fromUserId._id.toString() === loggedInUser._id.toString()) {
         // convert ObjectId to string for comparision
         return ele.toUserId;
       }
@@ -62,30 +63,42 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 */
 
 userRouter.get("/user/feed", userAuth, async (req, res) => {
-    try {
-        const loggedInUsedId = req.user._id
+  const page = parseInt(req.query.page) || 1;
+  let limit = parseInt(req.query.limit) || 10;
+  limit = limit > 50 ? 50 : limit;
+  const skip = (page - 1) * limit;
+  try {
+    const loggedInUser = req.user;
 
-        const connectionReqs = await ConnectionRequest.find({
-            $or: [
-                {fromUserId: loggedInUsedId},
-                {toUserId: loggedInUsedId}
-            ],
-            // status: {
-            //     $nin: ["interested", "accepted", "rejected", "ignored"]
-            // }
-        })
+    const connectionRequests = await ConnectionRequest.find({
+      $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+    });
 
-        console.log(connectionReqs);
-        
+    const hideUsersFromFeed = new Set();
+    connectionRequests.forEach((ele) => {
+      hideUsersFromFeed.add(ele.fromUserId);
+      hideUsersFromFeed.add(ele.toUserId);
+    });
 
-        res.send({
-            message: "Feed for the user",
-            data: connectionReqs
-        })
+    const newUserFeed = await User.find({
+      $and: [
+        { _id: { $nin: Array.from(hideUsersFromFeed) } },
+        { _id: { $ne: loggedInUser._id } },
+      ],
 
-    } catch (err) {
-        return res.status(400).send("Error fetching users data");
-    }
-})
+      // _id: {
+      //   $nin: Array.from(hideUsersFromFeed),
+      //   $ne: loggedInUser._id
+      // }
+    })
+      .select(USER_DISPLAY_DATA)
+      .skip(skip)
+      .limit(limit);
+
+    res.send(newUserFeed);
+  } catch (err) {
+    return res.status(400).send("Error fetching users data");
+  }
+});
 
 module.exports = userRouter;
