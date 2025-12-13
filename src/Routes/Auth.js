@@ -36,7 +36,7 @@ authRouter.post("/login", async (req, res) => {
     if (!user) {
       return res.status(400).send("Invalid Credentials");
     }
-    const isLoginValid = user.validatePassword(password);
+    const isLoginValid = await user.validatePassword(password);
 
     if (isLoginValid) {
       const token = await user.getJWT();
@@ -44,7 +44,7 @@ authRouter.post("/login", async (req, res) => {
         expires: new Date(Date.now() + 8 * 3600000),
       });
 
-      res.send("User Logged in successfully");
+      res.send(user);
     } else {
       return res.status(400).send("Invalid Credentials");
     }
