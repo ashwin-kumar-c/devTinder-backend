@@ -4,6 +4,7 @@ const cookie = require("cookie");
 const jwt = require("jsonwebtoken");
 const Chat = require("../Models/Chat");
 const ConnectionRequest = require("../Models/ConnectionRequest");
+const User = require("../Models/Users");
 
 const getSecretRoomId = (userId, targetUserId) => {
   return crypto
@@ -44,7 +45,7 @@ const initializeSocket = (server) => {
       socket.join(roomId);
     });
 
-    socket.on("send message", async ({ senderName, targetUserId, text }) => {
+    socket.on("send message", async ({ targetUserId, text }) => {
       try {
         const existingConnection = await ConnectionRequest.findOne({
           $or: [
@@ -57,6 +58,12 @@ const initializeSocket = (server) => {
         if (!existingConnection) {
           throw new Error("Connection does not exist");
         }
+
+        const user = await User.findOne({
+          _id: socket.user._id
+        })
+
+        const senderName = user.firstName
 
         const roomId = getSecretRoomId(socket.user._id, targetUserId);
         io.to(roomId).emit("message received", { senderName, text });
