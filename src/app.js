@@ -5,7 +5,10 @@ const authRouter = require("./Routes/Auth")
 const profileRouter = require("./Routes/Profile")
 const requestRouter = require("./Routes/Request")
 const userRouter = require("./Routes/User")
+const chatRouter = require("./Routes/Chat");
 const cors = require("cors")
+const http = require("http")
+const initializeSocket = require("./Utils/socket");
 
 require('dotenv').config()
 
@@ -22,11 +25,15 @@ app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter)
 app.use("/", userRouter)
+app.use("/", chatRouter)
+
+const server = http.createServer(app)
+initializeSocket(server)
 
 connectDB()
   .then(() => {
     console.log("Database Connection Established");
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
       console.log("Server is Successfully running on Port 4000");
     });
   })
