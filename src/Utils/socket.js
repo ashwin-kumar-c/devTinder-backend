@@ -39,7 +39,25 @@ const initializeSocket = (server) => {
     }
   });
 
+  const onlineUsers = new Map();
+
   io.on("connection", (socket) => {
+    const userId = socket.user._id.toString();
+
+    if (!onlineUsers.has(userId)) {
+      onlineUsers.set(userId, new Set());
+    }
+
+    onlineUsers.get(userId).add(socket.id);
+    console.log(onlineUsers.get(userId).add(socket.id), "BBB");
+
+    io.emit("user online", { userId });
+
+    socket.on("check user online", ({ targetUserId }, callback) => {
+      const online = onlineUsers.get(targetUserId);
+      callback({ online });
+    });
+
     socket.on("join chat", ({ targetUserId }) => {
       const roomId = getSecretRoomId(socket.user._id, targetUserId);
       socket.join(roomId);
@@ -60,10 +78,10 @@ const initializeSocket = (server) => {
         }
 
         const user = await User.findOne({
-          _id: socket.user._id
-        })
+          _id: socket.user._id,
+        });
 
-        const senderName = user.firstName
+        const senderName = user.firstName;
 
         const roomId = getSecretRoomId(socket.user._id, targetUserId);
         io.to(roomId).emit("message received", { senderName, text });
@@ -89,7 +107,15 @@ const initializeSocket = (server) => {
     });
 
     socket.on("disconnect", () => {
-      console.log("Disconnected");
+      const sockets = onlineUsers.get(userId);
+      if (sockets) {
+        sockets.delete(socket.id);
+
+        if (sockets.size === 0) {
+          onlineUsers.delete(userId);
+          io.emit("user offline", { userId });
+        }
+      }
     });
   });
 };
