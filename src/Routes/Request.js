@@ -28,7 +28,10 @@ requestRouter.post("/request/:status/:toUserId", userAuth, async (req, res) => {
       $or: [
         {fromUserId, toUserId},
         {fromUserId: toUserId, toUserId: fromUserId}
-      ]
+      ],
+      status: {
+        $nin: ["accepted", "rejected"]
+      }
     })
 
     if(duplicateConnectionReq) {
